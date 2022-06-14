@@ -1,0 +1,32 @@
+##########
+# Vscode #
+##########
+
+.vscode/
+
+############
+# Composer #
+############
+
+*.phar
+*.lock
+vendor/
+
+################
+# Vk libraries #
+################
+
+includes/vk_libraries/
+
+################
+# Front end    #
+################
+
+node_modules/
+dist/
+
+################
+# Index files  #
+################
+
+index.php
