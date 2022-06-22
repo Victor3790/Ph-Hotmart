@@ -97,7 +97,9 @@ class Ph_Hotmart
             'customer_id' => $customer_id,
             'product_id' => 108,
             'price' => $data['data']['purchase']['original_offer_price']['value'],
-            'commissions' => $data['data']['commissions']
+            'commissions' => $data['data']['commissions'],
+            'transaction' => $data['data']['purchase']['transaction'],
+            'date' => $data['data']['purchase']['order_date']
         );
 
         $this->add_order( $order_data );
@@ -165,10 +167,7 @@ class Ph_Hotmart
     private function add_order( $data )
     {
 
-        $total_commissions = 0;
-
-        $order_args = array( 
-            'status' => 'wc-hotmart-completed', 
+        $order_args = array(
             'customer_id' => $data['customer_id'],
         );
 
@@ -179,6 +178,8 @@ class Ph_Hotmart
         $order->set_total($data['price']);
 
         //Add meta with total commissions.
+        
+        $total_commissions = 0;
 
         if( empty( $data['commissions'] ) )
             $data['commissions'] = array();
@@ -189,7 +190,20 @@ class Ph_Hotmart
 
         }
 
+        //Get the date
+
+        $ts = $data['date'] / 1000;
+        $date = date( DATE_ATOM, $ts );
+
+        //Set info
+
         $order->update_meta_data( 'comisiones_hotmart', $total_commissions );
+        $order->set_payment_method( 'Hotmart' );
+        $order->set_payment_method_title( 'Hotmart' );
+        $order->set_date_paid( $date );
+        $order->set_transaction_id( $data['transaction'] );
+        $order->update_status('wc-completed');
+        $order->update_status('wc-hotmart-completed');
 
         $order->save();
 
