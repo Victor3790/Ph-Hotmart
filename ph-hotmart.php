@@ -104,8 +104,6 @@ class Ph_Hotmart
 
         $this->add_order( $order_data );
 
-        return rest_ensure_response( 'Hello World, this is the WordPress REST API'.PHP_EOL );
-
     }
 
     public function register_custom_order_status()
@@ -146,6 +144,15 @@ class Ph_Hotmart
 
     public function check_origin()
     {
+
+        if( empty( $_GET['un'] ) || empty( $_GET['pass'] ) )
+            return false;
+
+        $user = sanitize_text_field( $_GET['un'] );
+        $password = sanitize_text_field( $_GET['pass'] );
+
+        if( $user !== 'phronesis' || $password !== 'ph22062022' )
+            return false;
 
         return true;
 
