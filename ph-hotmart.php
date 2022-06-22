@@ -93,9 +93,14 @@ class Ph_Hotmart
 
         }
 
-        $price = $data['data']['purchase']['price']['value'];
+        $order_data = array(
+            'customer_id' => $customer_id,
+            'product_id' => 108,
+            'price' => $data['data']['purchase']['original_offer_price']['value'],
+            'commissions' => $data['data']['commissions']
+        );
 
-        $this->add_order( $customer_id, 108, $price );
+        $this->add_order( $order_data );
 
         return rest_ensure_response( 'Hello World, this is the WordPress REST API'.PHP_EOL );
 
@@ -157,15 +162,35 @@ class Ph_Hotmart
 
     }
 
-    private function add_order( $customer_id, $product_id, $price )
+    private function add_order( $data )
     {
 
-        $order_args = array( 'status' => 'wc-hotmart-completed', 'customer_id' => $customer_id );
+        $total_commissions = 0;
+
+        $order_args = array( 
+            'status' => 'wc-hotmart-completed', 
+            'customer_id' => $data['customer_id'],
+        );
 
         $order = wc_create_order( $order_args );
-        $product = wc_get_product( $product_id );
-        $order->add_product( $product, 1 );
-        $order->set_total($price);
+        $product = wc_get_product( $data['product_id'] );
+
+        $order->add_product( $product, 1, array('total'=>$data['price']) );
+        $order->set_total($data['price']);
+
+        //Add meta with total commissions.
+
+        if( empty( $data['commissions'] ) )
+            $data['commissions'] = array();
+
+        foreach ( $data['commissions'] as $commission ) {
+        
+            $total_commissions += $commission['value'];
+
+        }
+
+        $order->update_meta_data( 'comisiones_hotmart', $total_commissions );
+
         $order->save();
 
     }
