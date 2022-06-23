@@ -30,7 +30,9 @@ class Ph_Hotmart
         add_action( 'init', [ $this, 'register_custom_order_status' ] );
         add_action( 'woocommerce_product_options_general_product_data', [ $this, 'add_custom_field' ] );
         add_action( 'woocommerce_process_product_meta', [ $this, 'save_custom_field' ] );
+
         add_filter( 'wc_order_statuses', [ $this, 'add_custom_order_status' ] );
+        add_filter( 'woocommerce_product_data_store_cpt_get_products_query', [ $this, 'handle_custom_query_var' ], 10, 2 );
 
     }
 
@@ -75,6 +77,9 @@ class Ph_Hotmart
         if( $data['event'] != 'PURCHASE_COMPLETE' )
             return;
 
+        if( $this->order_exists( $data['data']['purchase']['transaction'] ) )
+            return;
+
         $email = $data['data']['buyer']['email'];
 
         $customer_id = null;
@@ -98,9 +103,25 @@ class Ph_Hotmart
 
         }
 
+        if( empty( $data['data']['product']['id'] ) )
+            return;
+
+        $query = new \WC_Product_Query();
+        $query->set( '_hotmart_product_id', $data['data']['product']['id'] );
+        $query->set( 'return', 'ids' );
+        $product_id = $query->get_products();
+
+        if( empty( $product_id ) ) {
+
+            $transaction = $data['data']['purchase']['transaction'];
+            $this->send_error_mail( 'Product id not set in Woocommerce. ID: ' . $data['data']['product']['id'] );
+            return;
+
+        }
+
         $order_data = array(
             'customer_id' => $customer_id,
-            'product_id' => 108,
+            'product_id' => $product_id[0],
             'price' => $data['data']['purchase']['original_offer_price']['value'],
             'commissions' => $data['data']['commissions'],
             'transaction' => $data['data']['purchase']['transaction'],
@@ -163,6 +184,52 @@ class Ph_Hotmart
 
     }
 
+    public function add_custom_field()
+    {
+
+        global $woocommerce, $post;
+
+        echo '<div class="product_custom_field">';
+
+        woocommerce_wp_text_input(
+            array(
+                'id' => '_hotmart_product_id',
+                'placeholder' => 'Id',
+                'label' => 'Hotmart id'
+            )
+        );
+
+        echo '</div>';
+
+    }
+
+    public function save_custom_field( $post_id )
+    {
+
+        if( empty( $_POST['_hotmart_product_id'] ) )
+            return;
+
+        $hotmart_id = esc_attr( $_POST['_hotmart_product_id'] );
+
+        update_post_meta( $post_id, '_hotmart_product_id', $hotmart_id );
+
+    }
+
+    public function handle_custom_query_var( $query, $query_vars )
+    {
+
+        if( empty( $query_vars['_hotmart_product_id'] ) )
+            return $query;
+
+        $query['meta_query'][] = array(
+            'key' => '_hotmart_product_id',
+            'value' => esc_attr( $query_vars['_hotmart_product_id'] )
+        );
+
+        return $query;
+
+    }
+
     private function register_user( $email )
     {
 
@@ -178,11 +245,6 @@ class Ph_Hotmart
 
     private function add_order( $data )
     {
-        
-        // Check if the order has already been processed.
-
-        if( $this->order_exists( $data['transaction'] ) )
-            return;
 
         $order_args = array(
             'customer_id' => $data['customer_id'],
@@ -223,37 +285,6 @@ class Ph_Hotmart
         $order->update_status('wc-hotmart-completed');
 
         $order->save();
-
-    }
-
-    public function add_custom_field()
-    {
-
-        global $woocommerce, $post;
-
-        echo '<div class="product_custom_field">';
-
-        woocommerce_wp_text_input(
-            array(
-                'id' => '_hotmart_product_id',
-                'placeholder' => 'Id',
-                'label' => 'Hotmart id'
-            )
-        );
-
-        echo '</div>';
-
-    }
-
-    public function save_custom_field( $post_id )
-    {
-
-        if( empty( $_POST['_hotmart_product_id'] ) )
-            return;
-
-        $hotmart_id = esc_attr( $_POST['_hotmart_product_id'] );
-
-        update_post_meta( $post_id, '_hotmart_product_id', $hotmart_id );
 
     }
 
