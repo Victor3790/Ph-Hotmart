@@ -265,6 +265,9 @@ class Ph_Hotmart
 
         foreach ( $data['commissions'] as $commission ) {
         
+            if( $commission['source'] == 'PRODUCER' )
+                continue;
+                
             $total_commissions += $commission['value'];
 
         }
