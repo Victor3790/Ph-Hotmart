@@ -176,6 +176,11 @@ class Ph_Hotmart
 
     private function add_order( $data )
     {
+        
+        // Check if the order has already been processed.
+
+        if( $this->order_exists( $data['transaction'] ) )
+            return;
 
         $order_args = array(
             'customer_id' => $data['customer_id'],
@@ -218,6 +223,26 @@ class Ph_Hotmart
         $order->save();
 
     }
+
+    //Checks if the order has been processed already.
+
+    private function order_exists( $transaction_id )
+    {
+
+        $args = array(
+            'transaction_id' => $transaction_id
+        );
+
+        $order = wc_get_orders( $args );
+
+        if( empty( $order ) )
+            return false;
+
+        return true;
+
+    }
+
+    //Sends an email to admin in case of error in Hotmart info.
 
     private function send_error_mail( $message = null )
     {
