@@ -28,6 +28,8 @@ class Ph_Hotmart
 
         add_action( 'rest_api_init', [ $this, 'set_endpoint' ] );
         add_action( 'init', [ $this, 'register_custom_order_status' ] );
+        add_action( 'woocommerce_product_options_general_product_data', [ $this, 'add_custom_field' ] );
+        add_action( 'woocommerce_process_product_meta', [ $this, 'save_custom_field' ] );
         add_filter( 'wc_order_statuses', [ $this, 'add_custom_order_status' ] );
 
     }
@@ -221,6 +223,37 @@ class Ph_Hotmart
         $order->update_status('wc-hotmart-completed');
 
         $order->save();
+
+    }
+
+    public function add_custom_field()
+    {
+
+        global $woocommerce, $post;
+
+        echo '<div class="product_custom_field">';
+
+        woocommerce_wp_text_input(
+            array(
+                'id' => '_hotmart_product_id',
+                'placeholder' => 'Id',
+                'label' => 'Hotmart id'
+            )
+        );
+
+        echo '</div>';
+
+    }
+
+    public function save_custom_field( $post_id )
+    {
+
+        if( empty( $_POST['_hotmart_product_id'] ) )
+            return;
+
+        $hotmart_id = esc_attr( $_POST['_hotmart_product_id'] );
+
+        update_post_meta( $post_id, '_hotmart_product_id', $hotmart_id );
 
     }
 
