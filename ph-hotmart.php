@@ -70,6 +70,9 @@ class Ph_Hotmart
 
         }
 
+        if( $data['event'] != 'PURCHASE_COMPLETE' )
+            return;
+
         $email = $data['data']['buyer']['email'];
 
         $customer_id = null;
