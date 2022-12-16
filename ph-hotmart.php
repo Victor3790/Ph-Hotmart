@@ -42,6 +42,12 @@ class Ph_Hotmart
         add_action( 'woocommerce_product_options_general_product_data', [ $admin, 'add_custom_field' ] );
         add_action( 'woocommerce_process_product_meta', [ $admin, 'save_custom_field' ] );
 
+        add_action( 'add_option_hotmart-webhook-token', [ $admin, 'change_autoload_to_no' ], 10, 2 );
+        add_action( 'add_option_hotmart-client-id', [ $admin, 'change_autoload_to_no' ], 10, 2 );
+        add_action( 'add_option_hotmart-client-secret', [ $admin, 'change_autoload_to_no' ], 10, 2 );
+        add_action( 'add_option_hotmart-basic-auth', [ $admin, 'change_autoload_to_no' ], 10, 2 );
+        add_action( 'add_option_ph-hotmart-admin-mail', [ $admin, 'change_autoload_to_no' ], 10, 2 );
+
         add_filter( 'wc_order_statuses', [ $admin, 'add_custom_order_status' ] );
         add_filter( 'woocommerce_product_data_store_cpt_get_products_query', [ $admin, 'handle_custom_query_var' ], 10, 2 );
         

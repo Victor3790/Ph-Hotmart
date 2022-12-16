@@ -115,11 +115,36 @@ class Plugin_Admin
     {
 
         $settings_sections = array(
-            'ph-hotmart-section' => array(
+            'ph-hotmart-authentication-section' => array(
+                'section_title' => 'Hotmart credentials',
+                'echo_header_callback' => function(){ echo '<p>Options for the Hotmart API connection</p>'; },
                 'settings' => array(
-                    'hotmart-key' => array(
-                        'field_label' => 'Hotmart key',
-                        'field_args' => array( 'placeholder' => 'Introduce the key' )
+                    'hotmart-webhook-token' => array(
+                        'field_label' => 'Hotmart webhook token',
+                        'field_args' => array( 'placeholder' => 'Token' )
+                    ),
+                    'hotmart-client-id' => array(
+                        'field_label' => 'Hotmart client id',
+                        'field_args' => array( 'placeholder' => 'ID' )
+                    ),
+                    'hotmart-client-secret' => array(
+                        'field_label' => 'Hotmart client secret',
+                        'field_args' => array( 'placeholder' => 'Secret' )
+                    ),
+                    'hotmart-basic-auth' => array(
+                        'field_label' => 'Hotmart basic auth',
+                        'field_args' => array( 'placeholder' => 'Basic' )
+                    )
+                )
+            ),
+            'ph-hotmart-admin-section' => array(
+                'section_title' => 'Admin settings',
+                'echo_header_callback' => function(){ echo '<p>Plugin admin settings</p>'; },
+                'settings' => array(
+                    'ph-hotmart-admin-mail' => array(
+                        'field_label' => 'Admin mail',
+                        'field_args' => array( 'placeholder' => 'user@mail.com' ),
+                        'setting_args' => array( 'sanitize_callback' => 'sanitize_email' )
                     )
                 )
             )
@@ -139,6 +164,19 @@ class Plugin_Admin
         $view = $template->load( $file );
 
         echo $view;
+
+    }
+
+    public function change_autoload_to_no( $option, $value )
+    {
+
+        $temp_value = '--';
+
+        if( $option == 'ph-hotmart-admin-mail' )
+            $temp_value = 'tmp@mail.com';
+
+        update_option( $option, $temp_value, 'no' );
+        update_option( $option, $value, 'no' );
 
     }
 

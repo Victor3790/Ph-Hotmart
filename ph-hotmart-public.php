@@ -2,6 +2,9 @@
 
 namespace ph_hotmart;
 
+require_once namespace\PATH.'includes/auth-method.php';
+require_once namespace\PATH.'includes/api-connection.php';
+
 class Plugin_Public 
 {
     
@@ -33,7 +36,7 @@ class Plugin_Public
 
         }
 
-        if( $data['event'] != 'PURCHASE_COMPLETE' )
+        if( $data['event'] != 'PURCHASE_APPROVED' )
             return;
 
         if( $this->order_exists( $data['data']['purchase']['transaction'] ) )
@@ -98,7 +101,7 @@ class Plugin_Public
             return false;
 
         $token_sent = $_SERVER['HTTP_X_HOTMART_HOTTOK'];
-        $token_in_db = get_option( 'hotmart-key', false );
+        $token_in_db = get_option( 'hotmart-webhook-token', false );
 
         if( empty( $token_in_db ) )
             return false;
@@ -158,6 +161,16 @@ class Plugin_Public
 
         //Set info
 
+        $auth_method = new Auth_Method();
+        $api_connection = new Api_Connection( $auth_method );
+        $tracking_data = $api_connection->get_sale_tracking_data( $data['transaction'] );
+
+        if( ! empty( $tracking_data['source'] ) ) 
+            $order->update_meta_data( 'Fuente', $tracking_data['source'] );
+
+        if( ! empty( $tracking_data['source_sck'] ) ) 
+            $order->update_meta_data( 'Medio', $tracking_data['source_sck'] );
+
         $order->update_meta_data( 'comisiones_hotmart', $total_commissions );
         $order->set_payment_method( 'Hotmart' );
         $order->set_payment_method_title( 'Hotmart' );
@@ -193,8 +206,13 @@ class Plugin_Public
     private function send_error_mail( string $message = '' ) : void 
     {
 
+        $admin_mail = get_option( 'ph-hotmart-admin-mail', null );
+
+        if( empty( $admin_mail ) || ! is_email( $admin_mail ) )
+            return;
+
         wp_mail( 
-            'vescareno@phronesisvirtual.com', 
+            $admin_mail, 
             'There has been an error, PH Hotmart plugin', 
             $message  
         );
